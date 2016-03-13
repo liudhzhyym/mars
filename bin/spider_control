@@ -1,0 +1,104 @@
+#!/bin/bash
+set -e
+trap "echo Fail unexpectedly on line \$LINENO!" ERR
+
+PID=$$
+[[ -z $PID ]] && PID=1000
+
+basename=$(basename "$0")
+
+# get curr path
+VERSION="1.0.1"
+FILE_PATH=`readlink -f $0`
+
+MOD_NAME="spider"
+BIN_DIR=`dirname $FILE_PATH`
+BASE_DIR=`dirname $BIN_DIR`
+
+FILE=`basename $FILE_PATH`
+
+LOG_DIR=$BASE_DIR/log
+CURRENT_TIME=`date +%Y%m%d%H`
+LOG_FILE="$LOG_DIR/$MOD_NAME.log.$CURRENT_TIME"
+
+SUPERVISE="$BASE_DIR/bin/supervise"
+
+BIN_LIST="task downPicTask shoppingTask"
+
+
+function log_debug() 
+{
+    echo `date +"DEBUG[$PID]: [%Y-%m-%d %k:%M:%S "` "$1" >> $LOG_FILE
+    [[ $2 == "echo" ]] && echo $1
+}
+
+mkdir -p $BASE_DIR/log
+for bin in $BIN_LIST ; do
+    mkdir -p $BASE_DIR/var/$bin
+done
+
+
+
+control_start() {
+    log_debug "control_start" "echo"
+    for bin in $BIN_LIST ; do
+        echo "control_start [$bin]"
+        $SUPERVISE -d $BASE_DIR/var/$bin -c "python $BASE_DIR/${bin}.py" -D
+    done
+    
+    #$SUPERVISE -d $BASE_DIR/var/downPicTask -c "python $BASE_DIR/task2.py" -D
+    #./bin/supervise -d run -c "python task1.py" -D
+}
+
+control_stop() {
+    log_debug "control_stop" "echo"
+    for bin in $BIN_LIST ; do
+        echo "control_stop [$bin]"
+        $SUPERVISE -d $BASE_DIR/var/$bin -c "" -s stop
+    done
+    # $SUPERVISE -d $BASE_DIR/var/task -c "" -s stop
+    # $SUPERVISE -d $BASE_DIR/var/downPicTask -c "" -s stop
+}
+
+control_restart() {
+    log_debug "control_restart" "echo"
+    control_stop
+    control_start
+}
+
+control_check() {
+    log_debug "control_check" "echo"
+}
+
+control_check_log() {
+    log_debug "control_check_log" "echo"
+}
+
+control_help() {
+    echo "Usage: $(basename "$0") [start|stop|restart|check|check_log]"
+}
+
+ACTION=$1
+
+cd $OSP_DIR
+
+case "X$ACTION" in
+    Xstart)
+        control_start
+        ;;
+    Xrestart)
+        control_restart
+        ;;
+    Xstop)
+        control_stop
+        ;;
+    Xcheck)
+        control_check
+        ;;
+    Xcheck_log)
+        control_check_log
+        ;;
+    *)
+        control_help
+        ;;
+esac
