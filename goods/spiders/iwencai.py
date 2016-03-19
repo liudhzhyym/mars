@@ -13,6 +13,7 @@ import copy
 import common
 import sys
 
+from urllib import urlencode
 from lib.common import Common
 from scrapy import log
 from goods.items import ProductInfo
@@ -25,11 +26,11 @@ class iwencaiSpider(scrapy.Spider):
     name = "wencai"
     allowed_domains = ["iwencai.com"]
     start_urls = [
-        "http://www.iwencai.com/",
+        "http://www.iwencai.com/stockpick",
     ]
     source_currency = "RMB"
     picType = "jpg"
-    debug = "true"
+    debug = ""
     taskId = -1
     commonLib = False
     env_type = "offline"
@@ -45,46 +46,108 @@ class iwencaiSpider(scrapy.Spider):
         self.commonLib.write_log("get task id is [%s]" % (self.taskId))
 
     def parse(self, response):
-        # ## 打折
-
         try:        
-            expectCnt = 1
-            actualCnt = 0
 
-            top_bar_list = ["男婴","女婴","男童","女童"]
-            urlStatus = common.STATUS_DONE
+            ## 获取技术指标列表
+            # for option in response.xpath("//div[@class='area_item']/a[@name='lm_c_jszb']/../div//a[@class='other_link']/@href"):
+            #     href = option.extract().strip()
 
-            url = "http://www.iwencai.com/stockpick/search?typed=0&preParams=&ts=1&f=1&qs=1&selfsectsn=&querytype=&searchfilter=&tid=stockpick&w=2015%E5%B9%B46%E6%9C%8828%E6%97%A5%E6%B6%A8%E5%B9%85%E5%A4%A7%E4%BA%8E2%25%E5%B0%8F%E4%BA%8E5%25%EF%BC%9B2015%E5%B9%B46%E6%9C%8828%E6%97%A5%E7%9A%84%E6%8D%A2%E6%89%8B%E7%8E%87%E5%B0%8F%E4%BA%8E2%25%EF%BC%9B2015%E5%B9%B46%E6%9C%8828%E6%97%A5kdj%E9%87%91%E5%8F%89"
-            request = scrapy.Request(url, callback=self.parse_product_detail)
+            #     self.commonLib.write_log("get indicator list url is [%s]" % (href))
+            #     request = scrapy.Request(href, callback=self.parse_indicator_list)
+            #     yield request
+                
+            #     if self.debug:
+            #         self.commonLib.write_log("debug")
+            #         return
+
+            indicatorUrl = "http://www.iwencai.com/stockpick/search?ts=1&tid=stockpick&queryarea=all&qs=hd_ma_all&w=MACD%E9%87%91%E5%8F%89"
+            request = scrapy.Request(indicatorUrl, callback=self.parse_indicator_detail)
             yield request
-
+            
         except Exception, e:
             urlStatus = common.STATUS_FAIL
             exc_type, exc_value, exc_traceback = sys.exc_info()
             msgStr = self.commonLib.write_exception(exc_type, exc_value, exc_traceback)
             self.commonLib.write_log(msgStr)
-            yield common.addLog(msgStr,self.taskId,common.LOG_FATAL,response.url,self.name)
-        finally:
-            yield common.addUrl(response.url,self.taskId,'',common.LEVEL_HOME,expectCnt,actualCnt,urlStatus)
 
 
-    def parse_product_detail(self, response):
+    def parse_indicator_list(self, response):
         try:         
+            self.commonLib.write_log("parse_indicator_list url is [%s]" % (response.url))
 
-            self.commonLib.write_log("parse_product_detail url is [%s]" % (response.url))
+            indicatorListStr = response.xpath('//script').re("data_item.typeData = ([^;]+);")[0].strip()
+            #print "indicatorListStr is ",indicatorListStr
+            indicatorList = json.loads(indicatorListStr)
+            #print "indicatorList is ",indicatorList
 
+            subList = []
+            for option in indicatorList:
+                subListArr = option['sub_querys'].split("_")
+                subList = subList + subListArr
 
-            productDataStr = response.xpath('//script').re("var allResult = (.*);")[0].strip()
-            print "productDataStr is ",productDataStr
-            productData = json.loads(productDataStr)
-            print "productData is ",productData
-
+            for indicator in subList:
+                print indicator
+            self.commonLib.set_header("subList",subList)
 
         except Exception, e:
             urlStatus = common.STATUS_FAIL
             exc_type, exc_value, exc_traceback = sys.exc_info()
             msgStr = self.commonLib.write_exception(exc_type, exc_value, exc_traceback)
             self.commonLib.write_log(msgStr)
-        finally:
-            self.commonLib.write_log("done")
+
+        self.commonLib.write_log("finish parse_indicator_list")
+
+    def parse_indicator_detail(self, response):
+        try:         
+            self.commonLib.write_log("parse_indicator_detail url is [%s]" % (response.url))
+
+            codeList = response.meta.get("codeList")
+            token = response.meta.get("token")
+            if token:
+                resultStr = response.body
+                result = json.loads(resultStr)
+            else:
+                resultStr = response.xpath('//script').re("var allResult = ([^;]+);")[0].strip()
+                result = json.loads(resultStr)
+                token = result['token']
+                codeList = []
+            
+            total = int(result['total'])
+            currentPage = int(result['page'])
+
+            perpage = 30
+            
+            for option in result['result']:
+                codeList.append(option[0])
+
+            print "codeList is ",codeList
+
+            self.commonLib.write_log("total is [%s], currentPage is [%s]" % (total,currentPage))
+
+            if currentPage*perpage<total:
+                nextPage = currentPage + 1
+                params = {
+                    'token':token,
+                    'p':nextPage,
+                    'perpage':perpage,
+                    'sort':'{"column":2,"order":"DESC"}',
+                    'showType':'["","","onTable","onTable","onTable","onTable"]',
+                }
+
+                queryParams = urlencode(params)
+                nextUrl = "http://www.iwencai.com/stockpick/cache?" + queryParams
+                self.commonLib.write_log("total is [%s], currentPage is [%s], nextPage url is [%s]" % (total,currentPage,nextUrl))
+                request = scrapy.Request(nextUrl, callback=self.parse_indicator_detail)
+                request.meta['token'] = token
+                request.meta['codeList'] = copy.deepcopy(codeList)
+                yield request
+            else:
+                self.commonLib.write_log("finish to parse indicator and list is [%s]" % (json.dumps(codeList)))
+        except Exception, e:
+            urlStatus = common.STATUS_FAIL
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            msgStr = self.commonLib.write_exception(exc_type, exc_value, exc_traceback)
+            self.commonLib.write_log(msgStr)
+
+        self.commonLib.write_log("finish parse_indicator_detail")
 
