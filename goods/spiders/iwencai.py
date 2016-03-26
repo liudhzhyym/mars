@@ -12,15 +12,12 @@ import time
 import copy
 import common
 import sys
+import urllib
 
 from urllib import urlencode
 from lib.common import Common
 from scrapy import log
-from goods.items import ProductInfo
-from goods.items import SkuInfo
-from goods.items import ImageInfo
-from goods.items import UrlInfo
-from goods.items import logInfo
+from goods.items import stockInfo
 
 class iwencaiSpider(scrapy.Spider):
     name = "wencai"
@@ -59,9 +56,32 @@ class iwencaiSpider(scrapy.Spider):
             #     if self.debug:
             #         self.commonLib.write_log("debug")
             #         return
+            day = "2016年03月23日"
+            query = "MACD金叉"
+            queryStr = day + query
 
-            indicatorUrl = "http://www.iwencai.com/stockpick/search?ts=1&tid=stockpick&queryarea=all&qs=hd_ma_all&w=MACD%E9%87%91%E5%8F%89"
-            request = scrapy.Request(indicatorUrl, callback=self.parse_indicator_detail)
+            queryData = {
+                "typed" : "1",
+                "preParams" : "",
+                "ts" : "1",
+                "f" : "1",
+                "qs" : "result_rewrite",
+                "selfsectsn" : "",
+                "querytype" : "",
+                "searchfilter" : "",
+                "tid" : "stockpick",
+                "w" : queryStr,
+            }
+            baseUrl = "http://www.iwencai.com/stockpick/search?"
+            queryUrl = baseUrl + urllib.urlencode(queryData)
+            #queryUrl = "ts=1&tid=stockpick&queryarea=all&qs=hd_ma_all&w=MACD%E9%87%91%E5%8F%89"
+            day = day.replace("年","").replace("月","").replace("日","")
+            queryInfo = {
+                "day" : day,
+                "query" : query,
+            }
+            request = scrapy.Request(queryUrl, callback=self.parse_indicator_detail)
+            request.meta['queryInfo'] = copy.deepcopy(queryInfo)
             yield request
             
         except Exception, e:
@@ -100,9 +120,13 @@ class iwencaiSpider(scrapy.Spider):
     def parse_indicator_detail(self, response):
         try:         
             self.commonLib.write_log("parse_indicator_detail url is [%s]" % (response.url))
-
-            codeList = response.meta.get("codeList")
+            queryInfo = response.meta['queryInfo']
+            #codeList = response.meta.get("codeList")
             token = response.meta.get("token")
+
+            day = queryInfo['day']
+            query = queryInfo['query']
+
             if token:
                 resultStr = response.body
                 result = json.loads(resultStr)
@@ -110,17 +134,27 @@ class iwencaiSpider(scrapy.Spider):
                 resultStr = response.xpath('//script').re("var allResult = ([^;]+);")[0].strip()
                 result = json.loads(resultStr)
                 token = result['token']
-                codeList = []
             
             total = int(result['total'])
             currentPage = int(result['page'])
-
             perpage = 30
-            
-            for option in result['result']:
-                codeList.append(option[0])
 
-            print "codeList is ",codeList
+            codeList = []
+            for option in result['result']:
+                code = option[0]
+                value = 1
+
+                stock =  stockInfo()
+                stock['itemType'] = common.TYPE_STOCK
+                stock['code'] = code
+                stock['day'] = day
+                stock['query'] = query
+                stock['value'] = value
+                yield stock
+
+                codeList.append(code)
+
+            print "codeList is ",codeList,queryInfo
 
             self.commonLib.write_log("total is [%s], currentPage is [%s]" % (total,currentPage))
 
@@ -140,6 +174,7 @@ class iwencaiSpider(scrapy.Spider):
                 request = scrapy.Request(nextUrl, callback=self.parse_indicator_detail)
                 request.meta['token'] = token
                 request.meta['codeList'] = copy.deepcopy(codeList)
+                request.meta['queryInfo'] = copy.deepcopy(queryInfo)
                 yield request
             else:
                 self.commonLib.write_log("finish to parse indicator and list is [%s]" % (json.dumps(codeList)))

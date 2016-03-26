@@ -58,7 +58,7 @@ class Common(object):
     #     self.test_notice_header()
     def http_post(self,url,data):
         try:
-            hostName = "apidev.bonbon.club"
+            hostName = "172.31.27.151"
             env_type = self.get_env()
             if env_type == "online":
                #hostName = "172.31.9.126"

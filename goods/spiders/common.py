@@ -13,6 +13,7 @@ TYPE_SKU = "sku"
 TYPE_LOG = "log"
 TYPE_URL = "url"
 TYPE_PIC = "pic"
+TYPE_STOCK = "stock"
 
 LOG_FATAL = "fatal"
 LOG_WARNING = "warning"

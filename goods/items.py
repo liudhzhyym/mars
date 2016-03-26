@@ -99,4 +99,12 @@ class logInfo(scrapy.Item):
     sourceWebsite = scrapy.Field()
 
 
+# 日志信息 
+class stockInfo(scrapy.Item):
+    itemType = scrapy.Field()
+    code = scrapy.Field()
+    day = scrapy.Field()
+    query = scrapy.Field()
+    value = scrapy.Field()
+
 

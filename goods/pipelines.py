@@ -53,148 +53,35 @@ class GoodsPipeline(ImagesPipeline):
                 yield scrapy.Request(image_url)
             except Exception, e:
                 print e
-            
-
-    # def process_item(self, item, spider):
-    #     print "process_item "
-    #     item_data = {}
-    #     trip_arr = ["itemName","itemDetail","size","categoryLevel1","categoryLevel2"]
-    #     for key,value in item.items():
-    #         if key=="size":
-    #             #value = value.replace("-","--").replace("½",".5")
-    #             value = value.replace("½",".5")
-    #         if key in trip_arr:
-    #             value = value.replace("®"," ").replace("™"," ").replace("½",".5")
-    #         item_data[key] = value
-    #     # if item_data.get('sourceSkuId'):
-    #     #     ## sku信息
-    #     #     url = '/api/spider/addSku'
-    #     #     post_data = {}
-    #     #     post_data['sku'] = item_data
-    #     #     self.http_post(url,post_data)
-    #     #     print "this is a sku"
-    #     # elif item_data.get('image_urls'):
-    #     #     return item
-    #     # elif item_data.get('sourceItemId'):
-    #     #     url = '/api/spider/addItem'
-    #     #     post_data = {}
-    #     #     post_data['item'] = item_data
-    #     #     self.http_post(url,post_data)
-    #     #     print "this is a item"
-    #     commonLib = Common()
-    #     itemType = item_data.pop("itemType")
-
-    #     if itemType == spiders.common.TYPE_URL:
-    #         url = '/api/spider/addUrl'
-    #         commonLib.http_post(url,item_data)
-    #         print "this is a url"
-    #     elif itemType == spiders.common.TYPE_LOG:
-    #         url = '/api/spider/addLog'
-    #         post_data = {}
-    #         post_data['log'] = item_data
-    #         commonLib.http_post(url,post_data)
-    #         print "this is a log"
-    #     elif itemType == spiders.common.TYPE_ITEM:
-    #         url = '/api/spider/addItem'
-    #         post_data = {}
-    #         post_data['item'] = item_data
-    #         commonLib.http_post(url,post_data)
-    #         print "this is a item"
-
-    #     elif itemType == spiders.common.TYPE_SKU:
-    #         url = '/api/spider/addSku'
-    #         post_data = {}
-    #         post_data['sku'] = item_data
-    #         commonLib.http_post(url,post_data)
-    #         print "this is a sku"
-
-    #     # elif 'image_url' in item:
-    #     #     images = []
-    #     #     dir_path = '%s/%s' % ('/home/work/opbin/2015111615liu', spider.name)
-
-    #     #     if not os.path.exists(dir_path):
-    #     #         os.makedirs(dir_path)
-    #     #     for image_url in item['image_url']:
-    #     #         us = image_url.split('/')[3:]
-    #     #         image_file_name = '_'.join(us)
-    #     #         file_path = '%s/%s' % (dir_path, image_file_name)
-    #     #         print "file_path = ",file_path
-    #     #         images.append(file_path)
-    #     #         if os.path.exists(file_path):
-    #     #             continue
-    #     #         with open(file_path, 'wb') as handle:
-    #     #             response = requests.get(image_url, stream=True)
-    #     #             for block in response.iter_content(1024):
-    #     #                 if not block:
-    #     #                     break
-
-    #     #                 handle.write(block)
         
-    #     return item
 
     def item_completed(self, results, item, info):
-        item_data = {}
-        trip_arr = ["itemName","itemDetail","size","categoryLevel1","categoryLevel2"]
-        for key,value in item.items():
-            if key=="size":
-                #value = value.replace("-","--").replace("½",".5")
-                value = value.replace("½",".5")
-            if key in trip_arr:
-                value = value.replace("®"," ").replace("™"," ").replace("½",".5")
-            item_data[key] = value
+        # item_data = {}
+        # trip_arr = ["itemName","itemDetail","size","categoryLevel1","categoryLevel2"]
+        # for key,value in item.items():
+        #     if key=="size":
+        #         #value = value.replace("-","--").replace("½",".5")
+        #         value = value.replace("½",".5")
+        #     if key in trip_arr:
+        #         value = value.replace("®"," ").replace("™"," ").replace("½",".5")
+        #     item_data[key] = value
         commonLib = Common()
-        itemType = item_data.pop("itemType")
+        itemType = item.pop("itemType")
 
-        if itemType == spiders.common.TYPE_URL:
-            url = '/api/spider/addUrl'
-            commonLib.http_post(url,item_data)
-            print "this is a url"
-        elif itemType == spiders.common.TYPE_LOG:
-            url = '/api/spider/addLog'
-            post_data = {}
-            post_data['log'] = item_data
+        if itemType == spiders.common.TYPE_STOCK:
+            url = '/api/stock/addStock'
+            stock = {
+                "code" : item['code'],
+                "day" : item['day'],
+                item['query'] : item['value'],
+            }
+            post_data = {
+                "stock" : stock,
+            }
             commonLib.http_post(url,post_data)
-            print "this is a log"
-        elif itemType == spiders.common.TYPE_ITEM:
-            url = '/api/spider/addItem'
-            post_data = {}
-            post_data['item'] = item_data
-            commonLib.http_post(url,post_data)
-            print "this is a item"
-
-        elif itemType == spiders.common.TYPE_SKU:
-            url = '/api/spider/addSku'
-            post_data = {}
-            post_data['sku'] = item_data
-            commonLib.http_post(url,post_data)
-            print "this is a sku"
-        elif itemType == spiders.common.TYPE_PIC:
-            url = '/api/spider/uploadPic'
-            image_urls = item['image_urls']
-            #print "this is a pic ",item,results
-
-            for ok, x in results:
-                if ok:
-                    picUrl = x['url']
-                    picUrl = unquote(picUrl)
-                    if picUrl in image_urls:
-                        image_urls.remove(picUrl)
-                    picPath = IMAGES_STORE + x['path']
-
-                    commonLib.write_log("download pic path is [%s], url [%s] " % (picPath,picUrl))
-                    post_data = {
-                        'picUrl':picUrl,
-                        'picPath':picPath,
-                    }
-                    commonLib.http_post(url,post_data)
-            if image_urls:
-                for picUrl in image_urls:
-                    commonLib.write_log("download pic url [%s] failed " % (picUrl))
-                    post_data = {
-                        'picUrl':picUrl,
-                        'picPath':spiders.common.STATUS_FAIL,
-                    }
-                    commonLib.http_post(url,post_data)
+            print "this is a stock"
+        else:
+            print "unknow item type"
         return item
 
 class MyImagesPipeline(ImagesPipeline):
