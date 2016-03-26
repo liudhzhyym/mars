@@ -26,7 +26,7 @@ class Common(object):
     def write_log(self,logMsg):
         self.log.write_log(log.Log.INFO, logMsg)
         self.log.renew()
-        #print "write_log"
+        #print "@@ write_log " ,  logMsg
     
     def write_file(self,name,content):
         #self.prefix = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

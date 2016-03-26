@@ -13,6 +13,7 @@ import copy
 import common
 import sys
 import urllib
+import conf.stock as stockConf
 
 from urllib import urlencode
 from lib.common import Common
@@ -27,7 +28,7 @@ class iwencaiSpider(scrapy.Spider):
     ]
     source_currency = "RMB"
     picType = "jpg"
-    debug = ""
+    debug = "true"
     taskId = -1
     commonLib = False
     env_type = "offline"
@@ -45,6 +46,9 @@ class iwencaiSpider(scrapy.Spider):
     def parse(self, response):
         try:        
 
+            request = scrapy.Request(response.url, callback=self.query_indicator_list)
+            request.meta['method'] = "query_indicator_list"
+            yield request
             ## 获取技术指标列表
             # for option in response.xpath("//div[@class='area_item']/a[@name='lm_c_jszb']/../div//a[@class='other_link']/@href"):
             #     href = option.extract().strip()
@@ -56,8 +60,65 @@ class iwencaiSpider(scrapy.Spider):
             #     if self.debug:
             #         self.commonLib.write_log("debug")
             #         return
-            day = "2016年03月23日"
-            query = "MACD金叉"
+            # day = "2016年03月23日"
+            # indicator = "MACD金叉"
+            # yield self.query_indicator_by_day(indicator,day)
+            # request = scrapy.Request(response.url, callback=self.query_indicator)
+            # request.meta['method'] = "query_indicator"
+            # yield request
+            
+        except Exception, e:
+            urlStatus = common.STATUS_FAIL
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            msgStr = self.commonLib.write_exception(exc_type, exc_value, exc_traceback)
+            self.commonLib.write_log(msgStr)
+
+    def query_indicator_list(self,response):
+        try:        
+
+            ## 获取技术指标列表
+            #for option in response.xpath("//div[@class='area_item']/a[@name='lm_c_jszb']/../div//a[@class='other_link']/@href"):
+            for option in response.xpath("//div[@class='area_item']/a[@name='lm_c_jszb']/../div//dt[@class='type_name']"):
+                indicatorName = option.xpath("span[@class='name font_yahei']/text()")[0].extract().strip()
+                href = option.xpath("a/@href")[0].extract().strip()
+
+                self.commonLib.write_log("get indicator [%s] list url is [%s]" % (indicatorName,href))
+                request = scrapy.Request(href, callback=self.parse_indicator_list)
+                request.meta['indicator'] = indicatorName
+                yield request
+                
+                if self.debug:
+                    self.commonLib.write_log("debug")
+                    return
+
+        except Exception, e:
+            urlStatus = common.STATUS_FAIL
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            msgStr = self.commonLib.write_exception(exc_type, exc_value, exc_traceback)
+            self.commonLib.write_log(msgStr)
+
+    def convertDay2Str(self,day):
+        years = day[0:4]
+        months = day[4:6]
+        days = day[6:8]
+        dayStr = "%s年%s月%s日" % (years,months,days)
+        return dayStr
+
+    def query_indicator(self,response):
+        day = "2016年03月23日"
+        indicator = "MACD金叉"
+        #timeList = stockConf.timeList
+        timeList = stockConf.timeList[0:10]
+        for day in timeList:
+            dayStr = self.convertDay2Str(day)
+            yield self.query_indicator_by_day(indicator,day)    
+
+    def query_indicator_by_day(self,indicator,day):
+        try:        
+            self.commonLib.write_log("query_indicator_by_day of [%s] at [%s]" % (indicator,day))
+            # day = "2016年03月23日"
+            # query = "MACD金叉"
+            query = indicator
             queryStr = day + query
 
             queryData = {
@@ -82,7 +143,7 @@ class iwencaiSpider(scrapy.Spider):
             }
             request = scrapy.Request(queryUrl, callback=self.parse_indicator_detail)
             request.meta['queryInfo'] = copy.deepcopy(queryInfo)
-            yield request
+            return request
             
         except Exception, e:
             urlStatus = common.STATUS_FAIL
@@ -90,10 +151,10 @@ class iwencaiSpider(scrapy.Spider):
             msgStr = self.commonLib.write_exception(exc_type, exc_value, exc_traceback)
             self.commonLib.write_log(msgStr)
 
-
     def parse_indicator_list(self, response):
         try:         
-            self.commonLib.write_log("parse_indicator_list url is [%s]" % (response.url))
+            indicatorName = response.meta['indicatorName']
+            self.commonLib.write_log("parse_indicator_list [%s] url is [%s]" % (indicatorName,response.url))
 
             indicatorListStr = response.xpath('//script').re("data_item.typeData = ([^;]+);")[0].strip()
             #print "indicatorListStr is ",indicatorListStr
@@ -106,7 +167,7 @@ class iwencaiSpider(scrapy.Spider):
                 subList = subList + subListArr
 
             for indicator in subList:
-                print indicator
+                print indicatorName + " " + indicator
             self.commonLib.set_header("subList",subList)
 
         except Exception, e:
