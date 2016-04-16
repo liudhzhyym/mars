@@ -112,7 +112,7 @@ class iwencaiSpider(scrapy.Spider):
             # indicator = "MACD金叉"
             #timeList = stockConf.timeList
             timeList = stockConf.timeList
-            indicatorList = stockConf.indicatorList[0:10]
+            indicatorList = stockConf.indicatorList
             if self.debug:
                 self.commonLib.write_log("debug")
                 timeList = stockConf.timeList[0:5]
