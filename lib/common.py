@@ -60,9 +60,6 @@ class Common(object):
         try:
             hostName = "172.31.27.151"
             env_type = self.get_env()
-            if env_type == "online":
-               #hostName = "172.31.9.126"
-               hostName = "172.31.9.162"
 
             self.set_header('env_type', env_type)
             self.set_header('hostName', hostName)
