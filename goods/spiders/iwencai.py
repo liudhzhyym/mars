@@ -120,6 +120,7 @@ class iwencaiSpider(scrapy.Spider):
             for indicator in indicatorList:
                 for day in timeList:
                     dayStr = self.convertDay2Str(day)
+                    self.commonLib.write_log("start to query indicator_by_day of [%s] at [%s]" % (indicator,dayStr))
                     yield self.query_indicator_by_day(indicator,dayStr)    
 
 
