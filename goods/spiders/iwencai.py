@@ -114,7 +114,7 @@ class iwencaiSpider(scrapy.Spider):
             timeList = stockConf.timeList
             indicatorList = stockConf.indicatorList
             if self.debug:
-                self.commonLib.write_log("debug")
+                self.commonLib.write_log("in debug model")
                 timeList = stockConf.timeList[0:5]
                 indicatorList = stockConf.indicatorList[0:5]
             for indicator in indicatorList:
