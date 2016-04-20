@@ -58,7 +58,8 @@ class Common(object):
     #     self.test_notice_header()
     def http_post(self,url,data):
         try:
-            hostName = "172.31.27.151"
+            #hostName = "172.31.27.151"
+            hostName = "172.31.0.116"
             env_type = self.get_env()
 
             self.set_header('env_type', env_type)
