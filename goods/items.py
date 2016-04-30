@@ -106,5 +106,10 @@ class stockInfo(scrapy.Item):
     day = scrapy.Field()
     query = scrapy.Field()
     value = scrapy.Field()
+    openPrice = scrapy.Field()
+    closePrice = scrapy.Field()
+    maxPrice = scrapy.Field()
+    minPrice = scrapy.Field()
+    amount = scrapy.Field()
 
 

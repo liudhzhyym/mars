@@ -36,17 +36,21 @@ class GoodsPipeline(ImagesPipeline):
     def item_completed(self, results, item, info):
 
         commonLib = Common()
-        itemType = item.pop("itemType")
+        
+        item_data = {}
+        for key,value in item.items():
+            item_data[key] = value
 
+        itemType = item_data.pop("itemType")
         if itemType == spiders.common.TYPE_STOCK:
             url = '/api/stock/addStock'
-            stock = {
-                "code" : item['code'],
-                "day" : item['day'],
-                item['query'] : item['value'],
-            }
+            # stock = {
+            #     "code" : item['code'],
+            #     "day" : item['day'],
+            #     item['query'] : item['value'],
+            # }
             post_data = {
-                "stock" : stock,
+                "stock" : item_data,
             }
             commonLib.http_post(url,post_data)
             print "this is a stock"

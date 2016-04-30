@@ -49,17 +49,15 @@ class qqSpider(scrapy.Spider):
             stockList = stockConf.stockList
             # print stockList
             # return
+            years = ["10","11","12","13","14","15","16"]
             for code in stockList:
                 #code = "sh601009"
-                url = "http://data.gtimg.cn/flashdata/hushen/daily/15/%s.js" % (code)
-                request = scrapy.Request(url, callback=self.parse_stock_data)
-                request.meta['code'] = code
-                yield request
+                for year in years:
+                    url = "http://data.gtimg.cn/flashdata/hushen/daily/%s/%s.js" % (year,code)
+                    request = scrapy.Request(url, callback=self.parse_stock_data)
+                    request.meta['code'] = code
+                    yield request
 
-                url = "http://data.gtimg.cn/flashdata/hushen/daily/16/%s.js" % (code)
-                request = scrapy.Request(url, callback=self.parse_stock_data)
-                request.meta['code'] = code
-                yield request
 
         except Exception, e:
             urlStatus = common.STATUS_FAIL
@@ -96,21 +94,24 @@ class qqSpider(scrapy.Spider):
                 minPrice = tempArr[4].strip()
                 amount = tempArr[5].strip()
 
-                info = {
-                    "openPrice" : openPrice,
-                    "closePrice" : closePrice,
-                    "maxPrice" : maxPrice,
-                    "minPrice" : minPrice,
-                    "amount" : amount,
-                }
-                for key,value in info.items():
-                    stock =  stockInfo()
-                    stock['itemType'] = common.TYPE_STOCK
-                    stock['code'] = code
-                    stock['day'] = day
-                    stock['query'] = key
-                    stock['value'] = value
-                    yield stock
+                # info = {
+                #     "openPrice" : openPrice,
+                #     "closePrice" : closePrice,
+                #     "maxPrice" : maxPrice,
+                #     "minPrice" : minPrice,
+                #     "amount" : amount,
+                # }
+                # for key,value in info.items():
+                stock =  stockInfo()
+                stock['itemType'] = common.TYPE_STOCK
+                stock['code'] = code
+                stock['day'] = day
+                stock['openPrice'] = openPrice
+                stock['closePrice'] = closePrice
+                stock['maxPrice'] = maxPrice
+                stock['minPrice'] = minPrice
+                stock['amount'] = amount
+                yield stock
                 # stock =  stockInfo()
                 # stock['itemType'] = common.TYPE_STOCK
                 # stock['code'] = code
