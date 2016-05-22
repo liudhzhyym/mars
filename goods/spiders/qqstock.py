@@ -56,7 +56,7 @@ class qqSpider(scrapy.Spider):
             # return
             years = ["2010","2011","2012","2013","2014","2015","2016"]
             for code in stockList:
-                #code = "sh600588"
+                #code = "sh000002"
                 for year in years:
                     # http://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=kline_dayqfq2006&param=sh600588,day,2006-01-01,2006-12-31,320,qfq&r=0.8669112286146383
                     url = "http://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=kline_dayqfq%s&param=%s,day,%s-01-01,%s-12-31,320,qfq&r=0.8669112286146383" % (year , code , year , year)
@@ -90,14 +90,17 @@ class qqSpider(scrapy.Spider):
             code = codeNum + "." + codePlace
 
             jsonStr = response.body.split("=")[-1]
-            print jsonStr
+            #print jsonStr
             retData = json.loads(jsonStr)
             if retData['code'] != 0:
                 raise ValueError("query data failed of [%s]" %(stockCode))
             dataArr = []
             # print retData['data'][stockCode]['qfqday']
             # return
-            for stockData in retData['data'][stockCode]['qfqday']:
+            stockDataList = retData['data'][stockCode].get("qfqday")
+            if not stockDataList:
+                stockDataList = retData['data'][stockCode].get("day")
+            for stockData in stockDataList:
                 if len(stockData) < 5:
                     continue
                 day = stockData[0].replace("-","")
