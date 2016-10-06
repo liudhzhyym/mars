@@ -54,9 +54,9 @@ class qqSpider(scrapy.Spider):
             stockList = stockConf.stockList
             # print stockList
             # return
-            years = ["2010","2011","2012","2013","2014","2015","2016"]
+            years = ["2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010","2011","2012","2013","2014","2015","2016"]
             for code in stockList:
-                #code = "sh000002"
+                code = "sh600623"
                 for year in years:
                     # http://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=kline_dayqfq2006&param=sh600588,day,2006-01-01,2006-12-31,320,qfq&r=0.8669112286146383
                     url = "http://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=kline_dayqfq%s&param=%s,day,%s-01-01,%s-12-31,320,qfq&r=0.8669112286146383" % (year , code , year , year)
@@ -87,7 +87,7 @@ class qqSpider(scrapy.Spider):
             codeNum = code[-6:]
             #print codePlace,codeNum
             #return
-            code = codeNum + "." + codePlace
+            #code = codeNum + "." + codePlace
 
             jsonStr = response.body.split("=")[-1]
             #print jsonStr
@@ -127,6 +127,7 @@ class qqSpider(scrapy.Spider):
                 stock['maxPrice'] = maxPrice
                 stock['minPrice'] = minPrice
                 stock['amount'] = amount
+                #print stock
                 yield stock
                 # stock =  stockInfo()
                 # stock['itemType'] = common.TYPE_STOCK
