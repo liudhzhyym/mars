@@ -51,6 +51,7 @@ class GoodsPipeline(ImagesPipeline):
             # }
             post_data = {
                 "stock" : item_data,
+                'col' : 'qq',
             }
             commonLib.http_post(url,post_data)
             print "this is a stock"
