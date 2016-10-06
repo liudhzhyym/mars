@@ -86,8 +86,9 @@ ITEM_PIPELINES = {
 	#'goods.pipelines.MyImagesPipeline': 301,
 }
 
-#IMAGES_STORE = '/home/work/image/'
-#IMAGES_EXPIRES = 15
+IMAGES_STORE = '/home/work/image/'
+#IMAGES_STORE = '/Users/mars/image/'
+IMAGES_EXPIRES = 15
 #LOG_LEVEL = 'INFO'
 
 #LOG_FILE = "log/spider.log"

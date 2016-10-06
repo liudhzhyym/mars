@@ -26,6 +26,9 @@ from scrapy.utils.project import get_project_settings
 from urllib import unquote
 
 settings = get_project_settings()
+IMAGES_STORE = settings.get("IMAGES_STORE")
+#UPLOAD_IMAGE = "true"
+UPLOAD_IMAGE = "true"
 
 class GoodsPipeline(ImagesPipeline):
         
@@ -48,7 +51,6 @@ class GoodsPipeline(ImagesPipeline):
             # }
             post_data = {
                 "stock" : item_data,
-                "col" : 'qq',
             }
             commonLib.http_post(url,post_data)
             print "this is a stock"
