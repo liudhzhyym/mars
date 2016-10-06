@@ -29,7 +29,7 @@ class qqSpider(scrapy.Spider):
     ]
     custom_settings = {
         "CONCURRENT_REQUESTS_PER_DOMAIN": 4,
-        "DOWNLOAD_DELAY" : 1,
+        #"DOWNLOAD_DELAY" : 1,
     }
 
     debug = ""
