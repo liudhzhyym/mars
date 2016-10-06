@@ -64,7 +64,7 @@ class qqSpider(scrapy.Spider):
                     request = scrapy.Request(url, callback=self.parse_stock_data)
                     request.meta['code'] = code
                     yield request
-                    return
+                return
 
 
         except Exception, e:
@@ -129,7 +129,6 @@ class qqSpider(scrapy.Spider):
                 stock['amount'] = amount
                 #print stock
                 yield stock
-                return
                 # stock =  stockInfo()
                 # stock['itemType'] = common.TYPE_STOCK
                 # stock['code'] = code
